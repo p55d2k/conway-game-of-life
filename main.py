@@ -1,4 +1,5 @@
 from colorama import Fore
+from pysine import sine
 import pygame
 import random
 import time
@@ -26,12 +27,14 @@ if os.path.exists("config.json"):
         try:
             GRIDSIZE = min(config["GRIDSIZE"], 100)
             SIMULATION_SPEED = config["SIMULATION_SPEED"]
+            SOUND_MULTIPLIER = config["SOUND_MULTIPLIER"]
             WIDTH = config["WIDTH"]
             HEIGHT = config["HEIGHT"]
         except:
             print("Invalid Config File, using default values.")
             GRIDSIZE = 10
             SIMULATION_SPEED = 12
+            SOUND_MULTIPLIER = 1.3
             WIDTH, HEIGHT = 500, 500
 else:
     print("Config File not found, using default values. You can create a config.json file to change the values.")
@@ -81,6 +84,14 @@ def draw_grid():
         pygame.draw.line(screen, (255, 255, 255), (0, x * HEIGHT // GRIDSIZE), (WIDTH, x * HEIGHT // GRIDSIZE))
     pygame.draw.line(screen, (255, 255, 255), (0, HEIGHT), (WIDTH, HEIGHT))
 
+def generate_sound_from_pattern():
+    sound_mhz = 0
+    for i in range(0, GRIDSIZE):
+        for j in range(0, GRIDSIZE):
+            sound_mhz += pattern[i][j]
+    # make the sound multiplied with the sound_multiplier then adjust according to the gridsize so no matter the gridsize the sound is audible
+    return sound_mhz * max(SOUND_MULTIPLIER, 75) / GRIDSIZE
+
 def count_neighbours(x, y):
     count = 0
     for i in range(-1, 2):
@@ -129,6 +140,7 @@ def auto_run():
         pattern = update()
         generation += 1
         pattern_history.append(pattern)
+        sine(frequency=generate_sound_from_pattern(), duration=SIMULATION_SPEED/60)
 
         draw_text()
         draw_grid()
@@ -137,10 +149,6 @@ def auto_run():
 
         if is_pattern_empty():
             print("Grid Empty, Stopping Simulation")
-            break
-
-        if pattern in pattern_history[-4:]:
-            print("Grid Repeated, Stopping Simulation")
             break
 
 pygame.init()
@@ -166,6 +174,7 @@ while True:
                 pattern = update()
                 generation += 1
                 pattern_history.append(pattern)
+                sine(frequency=generate_sound_from_pattern(), duration=0.25)
             if event.key == pygame.K_LEFT:
                 if generation > 0:
                     generation -= 1

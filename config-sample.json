@@ -1,6 +1,7 @@
 {
   "GRIDSIZE": 10,
   "SIMULATION_SPEED": 12,
+  "SOUND_MULTIPLIER": 1.2,
   "WIDTH": 500,
   "HEIGHT": 500
 }
