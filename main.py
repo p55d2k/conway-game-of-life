@@ -85,12 +85,12 @@ def draw_grid():
     pygame.draw.line(screen, (255, 255, 255), (0, HEIGHT), (WIDTH, HEIGHT))
 
 def generate_sound_from_pattern():
-    sound_mhz = 0
+    sound_hz = 0
     for i in range(0, GRIDSIZE):
         for j in range(0, GRIDSIZE):
-            sound_mhz += pattern[i][j]
-    # make the sound multiplied with the sound_multiplier then adjust according to the gridsize so no matter the gridsize the sound is audible
-    return sound_mhz * max(SOUND_MULTIPLIER, 75) / GRIDSIZE
+            sound_hz += pattern[i][j]
+    untruncated_freq = sound_hz * max(SOUND_MULTIPLIER, 75) / GRIDSIZE
+    return untruncated_freq/10+100
 
 def count_neighbours(x, y):
     count = 0
@@ -135,6 +135,7 @@ def auto_run():
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
+                    pattern_history.append(pattern)
                     return
 
         pattern = update()
@@ -157,6 +158,8 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT+100))
 clock = pygame.time.Clock()
 
 while True:
+    generate_freq = False
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -171,12 +174,13 @@ while True:
                 pass
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
+                if pattern_history == [] or pattern != pattern_history[-1]:
+                    pattern_history.append(pattern)
                 pattern = update()
                 generation += 1
-                pattern_history.append(pattern)
-                sine(frequency=generate_sound_from_pattern(), duration=0.25)
+                generate_freq = True
             if event.key == pygame.K_LEFT:
-                if generation > 0:
+                if generation > 0 and pattern_history != []:
                     generation -= 1
                     pattern = pattern_history.pop()
             if event.key == pygame.K_r:
@@ -185,10 +189,15 @@ while True:
                 pattern_history = []
             if event.key == pygame.K_e:
                 randomize()
+                pattern_history.append(pattern)
             if event.key == pygame.K_s:
                 auto_run()
 
     draw_text()
     draw_grid()
+
+    if generate_freq:
+        sine(frequency=generate_sound_from_pattern(), duration=0.25)
+
     pygame.display.flip()
     clock.tick(15)
